@@ -4,7 +4,7 @@
         <el-main>
             <x-upload v-on:handle_error="showFail" v-on:handle_finish="showSuccess"></x-upload>
 
-            <el-row id="app-control">
+            <div id="app-control">
                 <el-row style="padding-bottom: 1em; font-size: 14px">
                     歌曲命名格式：
                     <el-radio label="1" name="format" v-model="download_format">歌手-歌曲名</el-radio>
@@ -14,10 +14,20 @@
                 </el-row>
                 <el-row>
                     <el-button @click="handleDownloadAll" icon="el-icon-download" plain>下载全部</el-button>
-                    <el-button @click="handleDeleteAll" icon="el-icon-delete" plain type="danger">删除全部</el-button>
-                    <el-checkbox border style="margin-left: 1em" v-model="instant_download">立即保存</el-checkbox>
+                    <el-button @click="handleDeleteAll" icon="el-icon-delete" plain type="danger">清除全部</el-button>
+
+
+                    <el-tooltip class="item" effect="dark" placement="top-start">
+                        <div slot="content">
+                            当您使用此工具进行大量文件解锁的时候，建议开启此选项。<br/>
+                            开启后，解锁结果将不会存留于浏览器中，防止内存不足。
+                        </div>
+                        <el-checkbox border style="margin-left: 1em" v-model="instant_download">立即保存</el-checkbox>
+                    </el-tooltip>
+
+
                 </el-row>
-            </el-row>
+            </div>
             <audio :autoplay="playing_auto" :src="playing_url" controls/>
 
             <x-preview :download_format="download_format" :table-data="tableData"
@@ -31,11 +41,11 @@
                 <a href="https://github.com/ix64/unlock-music/wiki/使用提示" target="_blank">使用提示</a>
             </el-row>
             <el-row>
-                目前支持网易云音乐(ncm)、QQ音乐(qmc, mflac, mgg, tkm)以及
-                <a href="https://github.com/ix64/unlock-music/blob/master/README.md" target="_blank">其他格式</a>。
+                目前支持网易云音乐(ncm), QQ音乐(qmc, mflac, mgg), 虾米音乐(xm), 酷我音乐(.kwm)
+                <a href="https://github.com/ix64/unlock-music/blob/master/README.md" target="_blank">更多</a>。
             </el-row>
             <el-row>
-                <span>Copyright &copy; 2019</span> MengYX
+                <span>Copyright &copy; 2019-</span><span v-text="(new Date()).getFullYear()"></span> MengYX
                 音乐解锁使用
                 <a href="https://github.com/ix64/unlock-music/blob/master/LICENSE" target="_blank">MIT许可协议</a>
                 开放源代码
@@ -82,12 +92,13 @@
                 try {
                     const resp = await fetch("https://stats.ixarea.com/collect/music/app-version", {
                         method: "POST", headers: {"Content-Type": "application/json"},
-                        body: JSON.stringify({Version: this.version})
+                        body: JSON.stringify({"Version": this.version})
                     });
                     updateInfo = await resp.json();
                 } catch (e) {
                 }
-                if (!!updateInfo && !!updateInfo.Found) {
+                if ((!!updateInfo && process.env.NODE_ENV === 'production') && (!!updateInfo.HttpsFound ||
+                    (!!updateInfo.Found && window.location.protocol !== "https:"))) {
                     this.$notify.warning({
                         title: '发现更新',
                         message: '发现新版本 v' + updateInfo.Version +
